@@ -121,7 +121,7 @@ end
 # helpers
 
 def get_lag_s server
-  server_infolist = Weechat.infolist_get 'irc_server', '', name
+  server_infolist = Weechat.infolist_get 'irc_server', '', server
 
   Weechat.infolist_next server_infolist
 
