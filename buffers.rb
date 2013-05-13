@@ -30,7 +30,7 @@ def weechat_init
 
   Weechat.bar_item_update 'ruby-buffers'
 
-  Weechat.hook_timer 1000, 0, 0, 'generate_callback', ''
+  Weechat.hook_timer 1000, 0, 0, 'redraw_if_scheduled', ''
 
   hooks = %w[
     buffer_switch
@@ -44,7 +44,34 @@ def weechat_init
     Weechat.hook_signal hook, 'generate_callback', ''
   end
 
+  redraw_schedule_hooks = %w[
+    buffer_closed
+    buffer_opened
+    buffer_title_changed
+    buffer_type_changed
+    hotlist_changed
+  ]
+
+  redraw_schedule_hooks.each do |hook|
+    Weechat.hook_signal hook, 'schedule_redraw', ''
+  end
+
   Weechat::WEECHAT_RC_OK
+end
+
+# schedule a redraw
+def schedule_redraw *args
+  @redraw = true
+
+  Weechat::WEECHAT_RC_OK
+end
+
+def redraw_if_scheduled *args
+  return Weechat::WEECHAT_RC_OK unless @redraw
+  
+  @redraw = false
+
+  generate_callback
 end
 
 # generic hook callback to update buffers bar
