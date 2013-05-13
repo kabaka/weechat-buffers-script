@@ -60,6 +60,9 @@ def generate data, item, window
   hotlist = Weechat.infolist_get 'hotlist', '', ''
   hotlist_data = {}
 
+  # TODO: replace with config variables
+  indentation_amount = 3
+
   until Weechat.infolist_next(hotlist).zero? do
     buffer_name = Weechat.infolist_string hotlist, 'buffer_name'
     color       = Weechat.infolist_string hotlist, 'color'
@@ -91,9 +94,9 @@ def generate data, item, window
     line << Weechat.color(color) if color
 
     unless number == last_number
-      line << number.to_s.rjust(3)
+      line << number.to_s.rjust(indentation_amount)
     else
-      line << '   '
+      line << (' ' * indentation_amount)
     end
 
     last_number = number
@@ -101,7 +104,6 @@ def generate data, item, window
     if channel_chars.include? name.chr
       name = "  #{name}"
     elsif plugin == 'irc' and buffer_name.start_with? 'server.'
-
       name = "#{name} #{get_lag_s name}"
     end
     
