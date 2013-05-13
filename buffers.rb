@@ -101,21 +101,22 @@ def generate data, item, window
 
   buffers = Weechat.infolist_get 'buffer', '', ''
 
+  # TODO: use CHANTYPES
   channel_chars = %w[# & + ! *]
 
   until Weechat.infolist_next(buffers).zero? do
     line = []
 
-    current      = Weechat.infolist_integer buffers, 'current_buffer'
+    current      = Weechat.infolist_integer(buffers, 'current_buffer').nonzero?
     number       = Weechat.infolist_integer buffers, 'number'
     name         = Weechat.infolist_string  buffers, 'short_name'
     buffer_name  = Weechat.infolist_string  buffers, 'name'
     plugin       = Weechat.infolist_string  buffers, 'plugin_name'
 
-    color = hotlist_data[buffer_name] || '250'
-
-    unless current.zero?
+    if current
       color = "default,cyan"
+    else
+      color = hotlist_data[buffer_name] || '250'
     end
 
     line << Weechat.color(color) if color
