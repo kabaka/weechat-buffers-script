@@ -22,13 +22,16 @@ def weechat_init
   Weechat.register 'buffers', 'Kabaka', '0.1', 'MIT',
     'High-Performance Buffers List', '', ''
 
-  Weechat.bar_item_new 'ruby-buffers', 'generate', ''
+  @bar_name       = 'ruby-buffers'
+  @bar_item_name  = 'ruby-buffers'
 
-  Weechat.bar_new 'ruby-buffers', '0', '0',
+  Weechat.bar_item_new @bar_item_name, 'generate', ''
+
+  Weechat.bar_new @bar_name, '0', '0',
     'root', '', 'left', 'columns_vertical', 'vertical',
-    '0', '0', 'default', 'default', 'default', '1', 'ruby-buffers'
+    '0', '0', 'default', 'default', 'default', '1', @bar_item_name
 
-  Weechat.bar_item_update 'ruby-buffers'
+  Weechat.bar_item_update @bar_item_name
 
   Weechat.hook_timer 1000, 0, 0, 'redraw_if_scheduled', ''
 
@@ -40,10 +43,6 @@ def weechat_init
     buffer_renamed
   ]
 
-  hooks.each do |hook|
-    Weechat.hook_signal hook, 'generate_callback', ''
-  end
-
   redraw_schedule_hooks = %w[
     buffer_closed
     buffer_opened
@@ -52,6 +51,10 @@ def weechat_init
     hotlist_changed
   ]
 
+  hooks.each do |hook|
+    Weechat.hook_signal hook, 'generate_callback', ''
+  end
+
   redraw_schedule_hooks.each do |hook|
     Weechat.hook_signal hook, 'schedule_redraw', ''
   end
@@ -59,7 +62,7 @@ def weechat_init
   Weechat::WEECHAT_RC_OK
 end
 
-# schedule a redraw
+
 def schedule_redraw *args
   @redraw = true
 
@@ -76,7 +79,7 @@ end
 
 # generic hook callback to update buffers bar
 def generate_callback *args
-  Weechat.bar_item_update 'ruby-buffers'
+  Weechat.bar_item_update @bar_item_name
 
   Weechat::WEECHAT_RC_OK
 end
