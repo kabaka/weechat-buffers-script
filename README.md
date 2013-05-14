@@ -13,4 +13,5 @@ or through editing the script directly. There is very little that can be
 changed. It is only designed to display vertically.
 
 *This is very young, very untested, and very limited. You are probably better
-off using `buffers.pl`.*`
+off using `buffers.pl`.*
+
