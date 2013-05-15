@@ -19,11 +19,14 @@
 # SOFTWARE.)
 
 def weechat_init
-  Weechat.register 'buffers', 'Kabaka', '0.1', 'MIT',
+  Weechat.register 'buffers', 'Kabaka', '0.2', 'MIT',
     'High-Performance Buffers List', '', ''
 
   @bar_name       = 'ruby-buffers'
   @bar_item_name  = 'ruby-buffers'
+
+  @hide,   @collapse  = true, true
+  @hidden, @collapsed = [],   []
 
   Weechat.bar_item_new @bar_item_name, 'generate', ''
 
@@ -59,8 +62,156 @@ def weechat_init
     Weechat.hook_signal hook, 'schedule_redraw', ''
   end
 
+  Weechat.hook_command 'buffers', 'Modify the buffers bar.',
+    'toggle [collapsed|hidden] | hide [buffer] | unhide [buffer] | collapse [server] | expand [server]',
+    [
+      'toggle: toggle visibility of some buffers',
+      '  collapsed: collapse or expand server buffers',
+      '  hidden: toggle buffers that have been individually hidden',
+      '  all: output all buffers (default behavior)',
+      'hide: hide the current buffer from the buffers list',
+      '  buffer: buffer name to hide from the buffers list',
+      'unhide: allow the current buffer to be shown on the buffers list',
+      '  buffer: buffer name to unhide from the buffers list',
+      'collapse: only show the server buffer for the current server',
+      '  server: server name to collapse',
+      'expand: enable display of all buffers for the current server',
+      '  server: server name to expand'
+    ].join("\n"),
+    [
+      'toggle collapsed | hidden',
+      'hide %(buffers_plugins_names)',
+      'unhide %(buffers_plugins_names)',
+      'collapse %(irc_servers)',
+      'expand %(irc_servers)'
+    ].join(' || '),
+    'buffers_cmd_callback', ''
+
   Weechat::WEECHAT_RC_OK
 end
+
+
+def buffers_cmd_callback data, buffer, args
+  cmd, param = args.split /\s/, 2
+
+  case cmd.downcase
+  when 'toggle'
+
+    case param
+    when nil
+      @collapse = (not @collapse)
+      @hide     = (not @hide)
+
+      generate_callback
+    when 'collapsed'
+      @collapse = (not @collapse)
+
+      generate_callback
+    when 'hidden'
+      @hide     = (not @hide)
+
+      generate_callback
+    else
+      Weechat::WEECHAT_RC_ERROR
+    end
+
+  when 'hide'
+    hide buffer, param
+  when 'unhide'
+    unhide buffer, param
+  when 'collapse'
+    collapse buffer, param
+  when 'expand'
+    expand buffer, param
+  else
+    Weechat::WEECHAT_RC_ERROR
+  end
+end
+
+def hide buffer, param
+  target = buffer_or_param buffer, param
+
+  if target.nil?
+    return Weechat::WEECHAT_RC_ERROR
+  end
+
+  @hidden << target
+  @hidden.uniq!
+
+  generate_callback
+end
+
+def unhide buffer, param
+  target = buffer_or_param buffer, param
+
+  if target.nil?
+    return Weechat::WEECHAT_RC_ERROR
+  end
+
+  @hidden.delete target
+
+  generate_callback
+end
+
+def collapse buffer, param
+  target = server_or_param buffer, param
+
+  if target.nil?
+    return Weechat::WEECHAT_RC_ERROR
+  end
+
+  @collapsed_servers << target
+  @collapsed_servers.uniq!
+
+  generate_callback
+end
+
+def expand buffer, param
+  target = server_or_param buffer, param
+
+  if target.nil?
+    return Weechat::WEECHAT_RC_ERROR
+  end
+
+  @collapsed_servers.delete target
+
+  generate_callback
+end
+
+def buffer_or_param buffer, param
+  if param
+    if buffer_exists? param
+      return param
+    end
+  else
+    return Weechat.buffer_get_string buffer, 'name'
+  end
+
+  nil
+end
+
+def server_or_param buffer, param
+  if param
+    if server_exists? param
+      return param
+    end
+  else
+    return Weechat.buffer_get_string(buffer, 'name').split('.').first
+  end
+
+  nil
+end
+
+def buffer_exists? buffer
+  plugin, buffer = buffer.split('.', 2)
+
+  not Weechat.buffer_search(plugin, buffer).empty?
+end
+
+def server_exists? server
+  not Weechat.buffer_search('', "server.#{server}").empty?
+end
+
 
 
 def schedule_redraw *args
@@ -114,7 +265,18 @@ def generate data, item, window
     number       = Weechat.infolist_integer buffers, 'number'
     name         = Weechat.infolist_string  buffers, 'short_name'
     buffer_name  = Weechat.infolist_string  buffers, 'name'
+    full_name    = Weechat.infolist_string  buffers, 'full_name'
     plugin       = Weechat.infolist_string  buffers, 'plugin_name'
+
+    server = buffer_name.split('.', 2).first
+
+    if @collapse and @collapsed.include? server
+      next
+    end
+
+    if @hide and @hidden.include? full_name
+      next
+    end
 
     if current
       color = "default,cyan"
@@ -133,14 +295,24 @@ def generate data, item, window
     last_number = number
 
     if channel_chars.include? name.chr
-      name = "  #{name}"
+      display_name = "  #{name}"
     elsif plugin == 'irc' and buffer_name.start_with? 'server.'
-      name = "#{name} #{get_lag_s name}"
+      display_name = "#{name} #{get_lag_s name}"
+    elsif plugin == 'irc'
+      display_name = "  #{name}"
+    else
+      display_name = name
     end
     
-    line << " #{name}"
+    line << " #{display_name}"
 
     line << Weechat.color('default')
+
+    if @collapse and server == 'server'
+      if @collapsed.include? name
+         line << " #{Weechat.color 'default'}++"
+      end
+    end
 
     output << line.join
   end
