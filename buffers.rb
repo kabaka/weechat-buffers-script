@@ -160,8 +160,8 @@ def collapse buffer, param
     return Weechat::WEECHAT_RC_ERROR
   end
 
-  @collapsed_servers << target
-  @collapsed_servers.uniq!
+  @collapsed << target
+  @collapsed.uniq!
 
   generate_callback
 end
@@ -173,7 +173,7 @@ def expand buffer, param
     return Weechat::WEECHAT_RC_ERROR
   end
 
-  @collapsed_servers.delete target
+  @collapsed.delete target
 
   generate_callback
 end
@@ -184,7 +184,7 @@ def buffer_or_param buffer, param
       return param
     end
   else
-    return Weechat.buffer_get_string buffer, 'name'
+    return Weechat.buffer_get_string buffer, 'full_name'
   end
 
   nil
@@ -196,7 +196,7 @@ def server_or_param buffer, param
       return param
     end
   else
-    return Weechat.buffer_get_string(buffer, 'name').split('.').first
+    return Weechat.buffer_get_string(buffer, 'full_name').split('.')[1]
   end
 
   nil
