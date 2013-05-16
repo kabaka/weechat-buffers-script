@@ -28,6 +28,9 @@ def weechat_init
   @hide,   @collapse  = true, true
   @hidden, @collapsed = [],   []
 
+  initialize_config
+  read_config
+
   Weechat.bar_item_new @bar_item_name, 'generate', ''
 
   Weechat.bar_new @bar_name, '0', '0',
@@ -38,7 +41,11 @@ def weechat_init
 
   Weechat.hook_timer 1000, 0, 0, 'redraw_if_scheduled', ''
 
-  hooks = %w[
+  # XXX: callbacks cause hidden buffers list to reset -- oops
+  #Weechat.hook_config 'plugins.var.ruby.buffers.hidden',    'read_config', ''
+  #Weechat.hook_config 'plugins.var.ruby.buffers.collapsed', 'read_config', ''
+
+  redraw_now_hooks = %w[
     buffer_switch
     buffer_merged
     buffer_unmerged
@@ -54,7 +61,7 @@ def weechat_init
     hotlist_changed
   ]
 
-  hooks.each do |hook|
+  redraw_now_hooks.each do |hook|
     Weechat.hook_signal hook, 'generate_callback', ''
   end
 
@@ -90,6 +97,8 @@ def weechat_init
   Weechat::WEECHAT_RC_OK
 end
 
+
+# Commands
 
 def buffers_cmd_callback data, buffer, args
   cmd, param = args.split /\s/, 2
@@ -137,6 +146,7 @@ def hide buffer, param
 
   @hidden << target
   @hidden.uniq!
+  save_config
 
   generate_callback
 end
@@ -149,6 +159,7 @@ def unhide buffer, param
   end
 
   @hidden.delete target
+  save_config
 
   generate_callback
 end
@@ -162,6 +173,7 @@ def collapse buffer, param
 
   @collapsed << target
   @collapsed.uniq!
+  save_config
 
   generate_callback
 end
@@ -174,6 +186,7 @@ def expand buffer, param
   end
 
   @collapsed.delete target
+  save_config
 
   generate_callback
 end
@@ -213,6 +226,34 @@ def server_exists? server
 end
 
 
+# Config
+
+def initialize_config
+  if Weechat.config_is_set_plugin('collapsed').zero?
+    Weechat.config_set_plugin 'collapsed', ''
+  end
+
+  if Weechat.config_is_set_plugin('hidden').zero?
+    Weechat.config_set_plugin 'hidden', ''
+  end
+end
+
+def save_config
+  Weechat.config_set_plugin 'collapsed', @collapsed.join(',')
+  Weechat.config_set_plugin 'hidden',    @hidden.join(',')
+end
+
+def read_config *args
+  initialize_config
+
+  @collapsed  = Weechat.config_get_plugin('collapsed').split(',')
+  @hidden     = Weechat.config_get_plugin('hidden').split(',')
+
+  generate_callback
+end
+
+
+# Output
 
 def schedule_redraw *args
   @redraw = true
@@ -323,7 +364,7 @@ def generate data, item, window
 end
 
 
-# helpers
+# output helpers
 
 def get_lag_s server
   server_infolist = Weechat.infolist_get 'irc_server', '', server
@@ -338,3 +379,4 @@ def get_lag_s server
 
   "#{Weechat.color 'default'}(#{Weechat.color '250'}#{lag}#{Weechat.color 'default'})"
 end
+
