@@ -296,9 +296,6 @@ def generate data, item, window
 
   buffers = Weechat.infolist_get 'buffer', '', ''
 
-  # TODO: use CHANTYPES
-  channel_chars = %w[# & + ! *]
-
   until Weechat.infolist_next(buffers).zero? do
     line = []
 
@@ -334,8 +331,10 @@ def generate data, item, window
     end
 
     last_number = number
+    
+    is_channel = Weechat.info_get('irc_is_channel', "#{server},#{name}").to_i
 
-    if channel_chars.include? name.chr
+    if is_channel.nonzero?
       display_name = "  #{name}"
     elsif plugin == 'irc' and buffer_name.start_with? 'server.'
       display_name = "#{name} #{get_lag_s name}"
