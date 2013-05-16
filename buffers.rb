@@ -28,6 +28,45 @@ def weechat_init
   @hide,   @collapse  = true, true
   @hidden, @collapsed = [],   []
 
+  @config_options = {
+    'current_fg' => {
+      :desc     => 'Foreground color for the currently selected buffer.',
+      :default  => 'black'
+    },
+    'current_bg' => {
+      :desc     => 'Background color for the currently selected buffer.',
+      :default  => 'white'
+    },
+    'default_fg' => {
+      :desc     => 'Foreground color for buffers which are not selected and are not in the hotlist.',
+      :default  => 'default'
+    },
+    'default_bg' => {
+      :desc     => 'Background color for buffers which are not selected and are not in the hotlist.',
+      :default  => 'default'
+    },
+    'inactive_fg' => {
+      :desc     => 'Foreground color for buffers which are not active (not current merged buffer) and not in the hotlist.',
+      :default  => 'default'
+    },
+    'inactive_bg' => {
+      :desc     => 'Background color for buffers which are not active (not current merged buffer) and not in the hotlist.',
+      :default  => 'default'
+    },
+    'lag_fg' => {
+      :desc     => 'Foreground color for server latency.',
+      :default  => 'default'
+    },
+    'lag_bg' => {
+      :desc     => 'Background color for server latency.',
+      :default  => 'default'
+    },
+    'lag_minimum' => {
+      :desc     => 'Minimum value for which to display server latency. 0 to always display.',
+      :default  => '0'
+    }
+  }
+
   initialize_config
   read_config
 
@@ -236,6 +275,15 @@ def initialize_config
   if Weechat.config_is_set_plugin('hidden').zero?
     Weechat.config_set_plugin 'hidden', ''
   end
+
+  @config_options.each do |option, data|
+    if Weechat.config_is_set_plugin(option).nonzero?
+      next
+    end
+
+    Weechat.config_set_desc_plugin  option, data[:desc]
+    Weechat.config_set_plugin       option, data[:default]
+  end
 end
 
 def save_config
@@ -250,6 +298,18 @@ def read_config *args
   @hidden     = Weechat.config_get_plugin('hidden').split(',')
 
   generate_callback
+end
+
+def get_config option
+  if Weechat.config_is_set_plugin(option).nonzero?
+    return Weechat.config_get_plugin option
+  end
+  
+  unless @config_options.has_key? option
+    return nil
+  end
+
+  @config_options[option][:default]
 end
 
 
@@ -300,6 +360,7 @@ def generate data, item, window
     line = []
 
     current      = Weechat.infolist_integer(buffers, 'current_buffer').nonzero?
+    active       = Weechat.infolist_integer(buffers, 'active').nonzero?
     number       = Weechat.infolist_integer buffers, 'number'
     name         = Weechat.infolist_string  buffers, 'short_name'
     buffer_name  = Weechat.infolist_string  buffers, 'name'
@@ -317,12 +378,28 @@ def generate data, item, window
     end
 
     if current
-      color = "default,cyan"
+      fg = get_config 'current_fg'
+      bg = get_config 'current_bg'
+      
+      color = get_color fg, bg
+
+    elsif hotlist_data[buffer_name]
+      color = get_color *(hotlist_data[buffer_name].split(',', 2))
+
+    elsif active
+      fg = get_config 'default_fg'
+      bg = get_config 'default_bg'
+
+      color = get_color fg, bg
+
     else
-      color = hotlist_data[buffer_name] || '250'
+      fg = get_config 'inactive_fg'
+      bg = get_config 'inactive_bg'
+
+      color = get_color fg, bg
     end
 
-    line << Weechat.color(color) if color
+    line << color if color
 
     unless number == last_number
       line << number.to_s.rjust(indentation_amount)
@@ -345,13 +422,11 @@ def generate data, item, window
       display_name = name
     end
     
-    line << " #{display_name}"
-
-    line << Weechat.color('default')
+    line << " #{display_name}#{get_color}"
 
     if @collapse and server == 'server'
       if @collapsed.include? name
-         line << " #{Weechat.color 'default'}++"
+         line << " ++"
       end
     end
 
@@ -367,6 +442,8 @@ end
 # output helpers
 
 def get_lag_s server
+  min = get_config('lag_minimum').to_f
+
   server_infolist = Weechat.infolist_get 'irc_server', '', server
 
   Weechat.infolist_next server_infolist
@@ -377,6 +454,16 @@ def get_lag_s server
 
   lag = lag.to_f / 1000
 
-  "#{Weechat.color 'default'}(#{Weechat.color '250'}#{lag}#{Weechat.color 'default'})"
+  if min > 0 and lag < min
+    return ''
+  end
+  
+  fg = get_config 'lag_fg'
+  bg = get_config 'lag_bg'
+
+  "#{get_color fg, bg}(#{lag})"
 end
 
+def get_color fg = 'default', bg = 'default'
+  Weechat.color "#{fg},#{bg}"
+end
