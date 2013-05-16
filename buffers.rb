@@ -461,6 +461,8 @@ def get_lag_s server
   fg = get_config 'lag_fg'
   bg = get_config 'lag_bg'
 
+  lag = sprintf '%.3f', lag
+
   "#{get_color fg, bg}(#{lag})"
 end
 
