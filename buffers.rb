@@ -332,9 +332,10 @@ def generate data, item, window
 
     last_number = number
     
-    is_channel = Weechat.info_get('irc_is_channel', "#{server},#{name}").to_i
+    is_channel = Weechat.info_get('irc_is_channel',
+                                  "#{server},#{name}") == '1'
 
-    if is_channel.nonzero?
+    if is_channel
       display_name = "  #{name}"
     elsif plugin == 'irc' and buffer_name.start_with? 'server.'
       display_name = "#{name} #{get_lag_s name}"
