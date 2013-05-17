@@ -62,6 +62,14 @@ def weechat_init
       :desc     => 'Background color for server latency.',
       :default  => 'default'
     },
+    'number_fg' => {
+      :desc     => 'Foreground color for buffer number.',
+      :default  => 'default'
+    },
+    'number_bg' => {
+      :desc     => 'Background color for buffer number.',
+      :default  => 'default'
+    },
     'lag_minimum' => {
       :desc     => 'Minimum value for which to display server latency. 0 to always display.',
       :default  => '0'
@@ -367,6 +375,11 @@ def generate data, item, window
 
   Weechat.infolist_free hotlist
 
+  fg = get_config 'number_fg'
+  bg = get_config 'number_bg'
+  
+  number_color = get_color fg, bg
+
   buffers = Weechat.infolist_get 'buffer', '', ''
 
   until Weechat.infolist_next(buffers).zero? do
@@ -396,6 +409,15 @@ def generate data, item, window
       end
     end
 
+    unless number == last_number
+      line << number_color
+      line << number.to_s.rjust(indentation_amount)
+
+      last_number = number
+    else
+      line << (' ' * indentation_amount)
+    end
+
     if current
       fg = get_config 'current_fg'
       bg = get_config 'current_bg'
@@ -418,15 +440,7 @@ def generate data, item, window
       color = get_color fg, bg
     end
 
-    line << color if color
-
-    unless number == last_number
-      line << number.to_s.rjust(indentation_amount)
-    else
-      line << (' ' * indentation_amount)
-    end
-
-    last_number = number
+    line << color
     
     is_channel = Weechat.info_get('irc_is_channel',
                                   "#{server},#{name}") == '1'

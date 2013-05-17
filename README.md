@@ -42,6 +42,8 @@ Many things are configurable. The settings listed here are found under
   current merged buffer) and not in the hotlist.
 * `inactive_fg` - Foreground color for buffers which are not active (not
   current merged buffer) and not in the hotlist.
+* `number_bg` - Background color for buffer number.
+* `number_fg` - Foreground color for buffer number.
 * `lag_bg` - Background color for server latency.
 * `lag_fg` - Foreground color for server latency.
 * `lag_minimum` - Minimum value for which to display server latency. 0 to
