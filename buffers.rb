@@ -87,7 +87,7 @@ def weechat_init
 
   # XXX: callbacks cause hidden buffers list to reset -- oops
   #Weechat.hook_config 'plugins.var.ruby.buffers.hidden',    'read_config', ''
-  x#Weechat.hook_config 'plugins.var.ruby.buffers.collapsed', 'read_config', ''
+  #Weechat.hook_config 'plugins.var.ruby.buffers.collapsed', 'read_config', ''
 
   redraw_now_hooks = %w[
     buffer_switch
@@ -391,7 +391,7 @@ def generate data, item, window
         next
       end
 
-      if @hotlist and hotlist_only
+      if @hotlist and hotlist_only and not server == 'server'
         next unless hotlist_data[buffer_name]
       end
     end
