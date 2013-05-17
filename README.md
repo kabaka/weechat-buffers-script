@@ -61,9 +61,6 @@ layout configuration. Manually setting these is possible, but not encouraged.
 The command to interact with the script is `/buffers`. The available parameters
 include:
 
-`toggle [collapsed|hidden] | hide [buffer] | unhide [buffer] | collapse
-[server] | expand [server]`
-
 * `toggle` - toggle visibility of some buffers
   * `collapsed` - collapse or expand server buffers
   * `hidden` - toggle buffers that have been individually hidden
