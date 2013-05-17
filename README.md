@@ -46,6 +46,8 @@ Many things are configurable. The settings listed here are found under
 * `lag_fg` - Foreground color for server latency.
 * `lag_minimum` - Minimum value for which to display server latency. 0 to
   always display.
+* `hotlist_only` - Only show buffers which appear in the hotlist (visibility
+  toggled with `/buffers toggle` or `/buffers toggle hotlist`).
 
 Colors for buffers which have activity are taken from WeeChat's hotlist color
 settings, so use those.
@@ -65,6 +67,7 @@ include:
 * `toggle` - toggle visibility of some buffers
   * `collapsed` - collapse or expand server buffers
   * `hidden` - toggle buffers that have been individually hidden
+  * `hotlist` - toggle buffers based on `hotlist_only` setting`
   * `all` - toggle all hidden and collapsed buffers (default behavior)
 * `hide` - hide the current buffer from the buffers list
   * `buffer` - buffer name to hide from the buffers list

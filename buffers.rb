@@ -25,7 +25,8 @@ def weechat_init
   @bar_name       = 'ruby-buffers'
   @bar_item_name  = 'ruby-buffers'
 
-  @hide,   @collapse  = true, true
+  @hide, @collapse, @hotlist  = true, true, true
+
   @hidden, @collapsed = [],   []
 
   @config_options = {
@@ -64,6 +65,10 @@ def weechat_init
     'lag_minimum' => {
       :desc     => 'Minimum value for which to display server latency. 0 to always display.',
       :default  => '0'
+    },
+    'hotlist_only' => {
+      :desc     => 'Only show buffers which appear in the hotlist (visibility toggled with /buffers toggle or /buffers toggle hotlist).',
+      :default  => 'no'
     }
   }
 
@@ -82,7 +87,7 @@ def weechat_init
 
   # XXX: callbacks cause hidden buffers list to reset -- oops
   #Weechat.hook_config 'plugins.var.ruby.buffers.hidden',    'read_config', ''
-  #Weechat.hook_config 'plugins.var.ruby.buffers.collapsed', 'read_config', ''
+  x#Weechat.hook_config 'plugins.var.ruby.buffers.collapsed', 'read_config', ''
 
   redraw_now_hooks = %w[
     buffer_switch
@@ -109,11 +114,12 @@ def weechat_init
   end
 
   Weechat.hook_command 'buffers', 'Modify the buffers bar.',
-    'toggle [collapsed|hidden] | hide [buffer] | unhide [buffer] | collapse [server] | expand [server]',
+    'toggle [collapsed|hidden|hotlist] | hide [buffer] | unhide [buffer] | collapse [server] | expand [server]',
     [
       'toggle: toggle visibility of some buffers',
       '  collapsed: collapse or expand server buffers',
       '  hidden: toggle buffers that have been individually hidden',
+      '  hotlist: toggle buffers based on hotlist_only setting',
       '  all: output all buffers (default behavior)',
       'hide: hide the current buffer from the buffers list',
       '  buffer: buffer name to hide from the buffers list',
@@ -125,7 +131,7 @@ def weechat_init
       '  server: server name to expand'
     ].join("\n"),
     [
-      'toggle collapsed | hidden',
+      'toggle collapsed | hidden | hotlist',
       'hide %(buffers_plugins_names)',
       'unhide %(buffers_plugins_names)',
       'collapse %(irc_servers)',
@@ -149,6 +155,7 @@ def buffers_cmd_callback data, buffer, args
     when nil
       @collapse = (not @collapse)
       @hide     = (not @hide)
+      @hotlist  = (not @hotlist)
 
       generate_callback
     when 'collapsed'
@@ -157,6 +164,10 @@ def buffers_cmd_callback data, buffer, args
       generate_callback
     when 'hidden'
       @hide     = (not @hide)
+
+      generate_callback
+    when 'hotlist'
+      @hotlist  = (not @hotlist)
 
       generate_callback
     else
@@ -342,8 +353,10 @@ def generate data, item, window
   hotlist = Weechat.infolist_get 'hotlist', '', ''
   hotlist_data = {}
 
-  # TODO: replace with config variables
+  # TODO: replace with config variables?
   indentation_amount = 3
+
+  hotlist_only = get_config('hotlist_only').downcase == 'yes'
 
   until Weechat.infolist_next(hotlist).zero? do
     buffer_name = Weechat.infolist_string hotlist, 'buffer_name'
@@ -369,12 +382,18 @@ def generate data, item, window
 
     server = buffer_name.split('.', 2).first
 
-    if @collapse and @collapsed.include? server
-      next
-    end
+    unless current
+      if @collapse and @collapsed.include? server
+        next
+      end
 
-    if @hide and @hidden.include? full_name
-      next
+      if @hide and @hidden.include? full_name
+        next
+      end
+
+      if @hotlist and hotlist_only
+        next unless hotlist_data[buffer_name]
+      end
     end
 
     if current
