@@ -19,7 +19,7 @@
 # SOFTWARE.)
 
 def weechat_init
-  Weechat.register 'buffers', 'Kabaka', '0.2', 'MIT',
+  Weechat.register 'buffers', 'Kabaka', '0.4', 'MIT',
     'High-Performance Buffers List', '', ''
 
   @bar_name       = 'ruby-buffers'
@@ -488,3 +488,4 @@ end
 def get_color fg = 'default', bg = 'default'
   Weechat.color "#{fg},#{bg}"
 end
+
