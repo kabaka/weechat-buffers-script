@@ -26,7 +26,7 @@ customization. There are not presently any plans to expand much beyond these.
 
 Upon loading the script, you will have a vertical buffers list on the left side
 of your WeeChat instance. You may move this to the right side if you wish. No
-tuning has been done for top and button configurations, so your mileage with
+tuning has been done for top and bottom configurations, so your mileage with
 those will vary.
 
 Many things are configurable. The settings listed here are found under
