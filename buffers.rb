@@ -455,7 +455,7 @@ def generate data, item, window
       display_name = name
     end
     
-    line << " #{display_name}#{get_color}"
+    line << " #{display_name}"
 
     if @collapse and server == 'server'
       if @collapsed.include? name
