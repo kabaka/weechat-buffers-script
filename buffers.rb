@@ -148,9 +148,19 @@ def weechat_init
     ].join(' || '),
     'buffers_cmd_callback', ''
 
+  # config name is hardcoded because plugin name is not initialized at this point
+  Weechat.hook_config 'plugins.var.ruby.buffers.*', 'buffers_config_callback', ''
+
   Weechat::WEECHAT_RC_OK
 end
 
+# Config hook
+
+def buffers_config_callback data, option, value
+  generate_callback
+
+  Weechat::WEECHAT_RC_OK
+end
 
 # Commands
 
