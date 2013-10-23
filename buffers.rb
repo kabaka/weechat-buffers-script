@@ -103,6 +103,7 @@ def weechat_init
     buffer_unmerged
     buffer_moved
     buffer_renamed
+    window_switch
   ]
 
   redraw_schedule_hooks = %w[
