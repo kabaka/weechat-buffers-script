@@ -19,7 +19,7 @@
 # SOFTWARE.)
 
 def weechat_init
-  Weechat.register 'buffers', 'Kabaka', '0.4', 'MIT',
+  Weechat.register 'buffers', 'Kabaka', '0.4.1', 'MIT',
     'High-Performance Buffers List', '', ''
 
   @bar_name       = 'ruby-buffers'
@@ -166,6 +166,8 @@ end
 
 def buffers_cmd_callback data, buffer, args
   cmd, param = args.split /\s/, 2
+
+  cmd ||= 'toggle'
 
   case cmd.downcase
   when 'toggle'
